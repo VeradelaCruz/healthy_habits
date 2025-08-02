@@ -1,0 +1,26 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/tu-usuario/tu-repo-config  # Cambia esto por tu repo real
+          default-label: main
+          search-paths:
+            - habit-service
+            - tracker-service
+            - user-service
+            - api-gateway
+  profiles:
+    active: native  # si usás archivos locales, o git si usás GitHub
+
+# Deshabilita la seguridad por defecto si no la usás aún
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

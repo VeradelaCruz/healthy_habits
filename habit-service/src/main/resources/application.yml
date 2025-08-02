@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: habit-service
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/habit_db  # esto ya incluye el nombre de la base de datos
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
