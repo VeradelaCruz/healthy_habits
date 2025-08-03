@@ -8,17 +8,14 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/tu-usuario/tu-repo-config  # Cambia esto por tu repo real
+          uri: file:///C:/Users/maida/OneDrive/Escritorio/Proyectos/healthy_habits_config
+          clone-on-start: true
           default-label: main
           search-paths:
             - habit-service
             - tracker-service
             - user-service
             - api-gateway
-  profiles:
-    active: native  # si usás archivos locales, o git si usás GitHub
-
-# Deshabilita la seguridad por defecto si no la usás aún
 management:
   endpoints:
     web:
