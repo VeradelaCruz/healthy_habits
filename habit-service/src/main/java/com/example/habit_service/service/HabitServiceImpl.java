@@ -1,5 +1,9 @@
 package com.example.habit_service.service;
 
+import com.example.habit_service.client.UserClientService;
+import com.example.habit_service.dtos.HabitWithUserDTO;
+import com.example.habit_service.exception.HabitNotFoundException;
+import com.example.habit_service.exception.UserNotFoundException;
 import com.example.habit_service.models.Habit;
 import com.example.habit_service.repository.HabitRepository;
 import lombok.RequiredArgsConstructor;
@@ -8,11 +12,15 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.file.attribute.UserPrincipalNotFoundException;
+
 @Service
 @RequiredArgsConstructor
 public class HabitServiceImpl implements HabitService{
-    @Autowired
+
     private final HabitRepository habitRepository;
+    private final UserClientService userClientService;
+
 
     @Override
     public Mono<Habit> createHabit(Habit habit) {
@@ -26,22 +34,35 @@ public class HabitServiceImpl implements HabitService{
 
     @Override
     public Mono<Habit> getHabitById(String id) {
-        return habitRepository.findById(id);
+        return habitRepository.findById(id)
+                .switchIfEmpty(Mono.error(new HabitNotFoundException(id)));
     }
 
     @Override
     public Mono<Void> deleteHabit(String id) {
-        return habitRepository.deleteById(id);
+        return habitRepository.deleteById(id)
+                .switchIfEmpty(Mono.error(new HabitNotFoundException(id)));
     }
 
     @Override
     public Flux<Habit> getHabitsByUserId(String userId) {
-        return habitRepository.findByUserId(userId);
+        return habitRepository.findByUserId(userId)
+                .switchIfEmpty(Mono.error(new UserNotFoundException(userId)));
     }
 
     @Override
     public Flux<Habit> getHabitsByCategory(String category) {
         return habitRepository.findByCategory(category);
+    }
+
+    public Mono<HabitWithUserDTO> getHabitWithUser(String habitId) {
+        return habitRepository.findById(habitId)
+                .switchIfEmpty(Mono.error(new HabitNotFoundException(habitId)))
+                .flatMap(habit ->
+                        userClientService.findUserById(habit.getUserId())
+                                .switchIfEmpty(Mono.error(new UserNotFoundException(habit.getUserId())))
+                                .map(user -> new HabitWithUserDTO(habit, user))
+                );
     }
 
 

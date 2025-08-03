@@ -1,5 +1,6 @@
 package com.example.tracker_service.controller;
 
+import com.example.tracker_service.dtos.TrackerWithUserAndHabit;
 import com.example.tracker_service.models.Tracker;
 import com.example.tracker_service.service.TrackerService;
 import jakarta.validation.Valid;
@@ -55,4 +56,10 @@ public class TrackerController {
         return trackerService.getTrackersByHabitId(habitId);
     }
 
+    @GetMapping("/with-user-habits/{id}")
+    public Mono<ResponseEntity<TrackerWithUserAndHabit>> getTrackerWithDetails(@PathVariable String id) {
+        return trackerService.findTrackerWithUserAndHabit(id)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
 }

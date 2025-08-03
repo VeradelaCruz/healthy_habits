@@ -1,5 +1,8 @@
 package com.example.tracker_service.service;
 
+import com.example.tracker_service.client.HabitServiceClient;
+import com.example.tracker_service.client.UserServiceClient;
+import com.example.tracker_service.dtos.TrackerWithUserAndHabit;
 import com.example.tracker_service.exception.DuplicateTrackerException;
 import com.example.tracker_service.exception.HabitNotFoundException;
 import com.example.tracker_service.exception.TrackerNotFoundException;
@@ -16,6 +19,8 @@ import reactor.core.publisher.Mono;
 public class TrackerServiceImpl implements TrackerService{
 
     private final TrackerRepository trackerRepository;
+    private final UserServiceClient userServiceClient;
+    private final HabitServiceClient habitServiceClient;
 
     @Override
     public Mono<Tracker> createTracker(Tracker tracker) {
@@ -71,5 +76,18 @@ public class TrackerServiceImpl implements TrackerService{
                     }
                     return Flux.fromIterable(list);
                 });
+    }
+
+    @Override
+    public Mono<TrackerWithUserAndHabit> findTrackerWithUserAndHabit(String id){
+        return trackerRepository.findById(id)
+                .switchIfEmpty(Mono.error(new TrackerNotFoundException(id)))
+                .flatMap(tracker -> Mono.zip(
+                        userServiceClient.findUserById(tracker.getUserId())
+                                .switchIfEmpty(Mono.error(new UserNotFoundException(tracker.getUserId()))),
+                        habitServiceClient.findHabitById(tracker.getHabitId())
+                                .switchIfEmpty(Mono.error(new HabitNotFoundException(tracker.getHabitId()))),
+                        (user, habit) -> new TrackerWithUserAndHabit(tracker, user, habit)
+                ));
     }
 }

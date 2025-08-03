@@ -1,5 +1,8 @@
 package com.example.habit_service.controller;
 
+import com.example.habit_service.dtos.HabitWithUserDTO;
+import com.example.habit_service.exception.HabitNotFoundException;
+import com.example.habit_service.exception.UserNotFoundException;
 import com.example.habit_service.models.Habit;
 import com.example.habit_service.service.HabitService;
 import jakarta.validation.Valid;
@@ -29,11 +32,7 @@ public class HabitController {
     @GetMapping("/{id}")
     public Mono<ResponseEntity<Habit>> getHabit(@PathVariable String id) {
         return habitService.getHabitById(id)
-                .map(habit -> ResponseEntity.ok(habit))
-                .defaultIfEmpty(
-                        ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body((Habit) Map.of("message", "Habit with id " + id + " not found"))
-                );
+                .map(ResponseEntity::ok);
     }
 
 
@@ -44,27 +43,18 @@ public class HabitController {
 
     @DeleteMapping("/delete/{id}")
     public Mono<ResponseEntity<String>> removeHabit(@PathVariable String id) {
-        return habitService.getHabitById(id)
-                .flatMap(habit ->
-                        habitService.deleteHabit(id)
-                                .then(Mono.just(ResponseEntity.ok().body("Habit deleted successfully.")))
-                )
-                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Habit not found."));
+        return habitService.deleteHabit(id)
+                .thenReturn(ResponseEntity.ok("Habit deleted successfully."));
     }
+
 
     @GetMapping("/user/{userId}")
     public Mono<ResponseEntity<List<Habit>>> getHabitsByUser(@PathVariable String userId) {
         return habitService.getHabitsByUserId(userId)
                 .collectList()
-                .flatMap(habits -> {
-                    if (habits.isEmpty()) {
-                        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(Collections.emptyList())); // o un mensaje, pero el body debe ser List<Habit>
-                    } else {
-                        return Mono.just(ResponseEntity.ok(habits));
-                    }
-                });
+                .map(ResponseEntity::ok);
     }
+
 
     @GetMapping("/category/{category}")
     public Mono<ResponseEntity<?>> getHabitsByCategory(@PathVariable String category) {
@@ -81,5 +71,12 @@ public class HabitController {
     }
 
 
+    @GetMapping("/with-user/{id}")
+    public Mono<ResponseEntity<HabitWithUserDTO>> getHabitWithUser(@PathVariable String id) {
+        return habitService.getHabitWithUser(id)
+                .map(ResponseEntity::ok)
+                .onErrorResume(HabitNotFoundException.class, e -> Mono.just(ResponseEntity.notFound().build()))
+                .onErrorResume(UserNotFoundException.class, e -> Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)));
+    }
 
 }
