@@ -2,6 +2,7 @@ package com.example.habit_service.service;
 
 import com.example.habit_service.client.UserClientService;
 import com.example.habit_service.dtos.HabitWithUserDTO;
+import com.example.habit_service.exception.CategoryNotFoundException;
 import com.example.habit_service.exception.HabitNotFoundException;
 import com.example.habit_service.exception.UserNotFoundException;
 import com.example.habit_service.models.Habit;
@@ -40,9 +41,11 @@ public class HabitServiceImpl implements HabitService{
 
     @Override
     public Mono<Void> deleteHabit(String id) {
-        return habitRepository.deleteById(id)
-                .switchIfEmpty(Mono.error(new HabitNotFoundException(id)));
+        return habitRepository.findById(id)
+                .switchIfEmpty(Mono.error(new HabitNotFoundException(id)))
+                .flatMap(habit -> habitRepository.deleteById(id));
     }
+
 
     @Override
     public Flux<Habit> getHabitsByUserId(String userId) {
@@ -52,7 +55,8 @@ public class HabitServiceImpl implements HabitService{
 
     @Override
     public Flux<Habit> getHabitsByCategory(String category) {
-        return habitRepository.findByCategory(category);
+        return habitRepository.findByCategory(category)
+                .switchIfEmpty(Mono.error(new CategoryNotFoundException(category)));
     }
 
     public Mono<HabitWithUserDTO> getHabitWithUser(String habitId) {

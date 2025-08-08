@@ -33,4 +33,10 @@ public class GlobalExceptionHandler {
         Map<String, String> error = Map.of("message", ex.getMessage());
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
     }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    Mono<ResponseEntity<Map<String, String>>>handleCategoryNotFoundException( CategoryNotFoundException ex){
+        Map<String, String> error = Map.of("message", ex.getMessage());
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(error));
+    }
 }
